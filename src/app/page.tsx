@@ -1,65 +1,68 @@
-import Image from "next/image";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="container mx-auto px-4 flex flex-col items-center justify-center min-h-[85vh] space-y-12 py-12">
+      <div className="space-y-6 max-w-4xl text-center">
+        <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80 mb-4 tracking-wider">
+          B2B Circular Economy SaaS
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+        <h1 className="text-5xl font-extrabold tracking-tight lg:text-7xl bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+          Zero-Friction Waste to Energy
+        </h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          A platform for Bhopal Municipal Corporation (BMC). Connecting Bulk Waste Generators (BWGs), Municipal Logistics, and RDF Markets across the city.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
+        <Card className="flex flex-col items-start border-t-4 border-t-blue-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card/50 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">📱 BWG AI Compliance</CardTitle>
+            <CardDescription className="text-base text-gray-400">For Bulk Waste Generators</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-between">
+            <p className="text-sm text-left mb-6 text-muted-foreground leading-relaxed">
+              Upload bin photos. AI Vision checks for 100% segregated dry waste. Generate EBWGR Certificates automatically to avoid penalties.
+            </p>
+            <Link href="/bwg" className="w-full mt-auto">
+              <Button className="w-full bg-blue-600 hover:bg-blue-700">Open Service Portal</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="flex flex-col items-start border-t-4 border-t-emerald-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card/50 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">🚛 BMC Logistics Dash</CardTitle>
+            <CardDescription className="text-base text-gray-400">For Municipal Authorities</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-between">
+            <p className="text-sm text-left mb-6 text-muted-foreground leading-relaxed">
+              Monitor 130 smart bins real-time, route verified waste directly to Material Recovery Facilities and track overall landfill diversion.
+            </p>
+            <Link href="/bmc" className="w-full mt-auto">
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700">Open Dashboard</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card className="flex flex-col items-start border-t-4 border-t-orange-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-card/50 backdrop-blur">
+          <CardHeader>
+            <CardTitle className="text-xl flex items-center gap-2">🏭 B2B RDF Marketplace</CardTitle>
+            <CardDescription className="text-base text-gray-400">For MRFs & Buyers</CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 flex flex-col justify-between">
+            <p className="text-sm text-left mb-6 text-muted-foreground leading-relaxed">
+              Live automated exchange platform for Refuse-Derived Fuel. Power plants buy directly from MRFs with secure, transparent handling.
+            </p>
+            <Link href="/marketplace" className="w-full mt-auto">
+              <Button className="w-full bg-orange-600 hover:bg-orange-700">Enter Marketplace</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

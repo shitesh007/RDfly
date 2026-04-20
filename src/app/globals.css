@@ -128,3 +128,21 @@
     @apply font-sans;
   }
 }
+
+@keyframes progress-slide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-progress-slide {
+  animation: progress-slide 3s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}

@@ -16,6 +16,13 @@ export interface Certificate {
   wasteVolumeTonnes: number;
 }
 
+export interface WasteLog {
+  id: string;
+  timestamp: string;
+  compliance_status: boolean;
+  notes?: string;
+}
+
 export interface RdfListing {
   id: string;
   sellerId: string;
@@ -25,6 +32,15 @@ export interface RdfListing {
   moistureContentPercent: number;
   pricePerTonne: number;
   status: 'available' | 'sold';
+}
+
+export interface Transaction {
+  id: string;
+  buyerName: string;
+  listingId: string;
+  totalAmount: number;
+  platformCommission: number;
+  date: string;
 }
 
 export const mockDatabase = {
@@ -131,5 +147,54 @@ export const mockDatabase = {
       pricePerTonne: 1000,
       status: 'available',
     }
-  ] as RdfListing[]
+  ] as RdfListing[],
+
+  wasteLogs: [] as WasteLog[],
+  
+  transactions: [] as Transaction[]
 };
+
+export function addWasteLog(log: Omit<WasteLog, 'id' | 'timestamp'>) {
+  const newLog: WasteLog = {
+    ...log,
+    id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    timestamp: new Date().toISOString()
+  };
+  mockDatabase.wasteLogs.push(newLog);
+  return newLog;
+}
+
+// ==========================================
+// MOCK ASYNC DB LAYER (Simulating Supabase)
+// ==========================================
+
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+export async function getBins(): Promise<Bin[]> {
+  await delay(800);
+  return [...mockDatabase.bins];
+}
+
+export async function getRdfListings(): Promise<RdfListing[]> {
+  await delay(600);
+  return [...mockDatabase.rdfListings];
+}
+
+export async function updateRdfListingStatus(id: string, status: 'available' | 'sold'): Promise<boolean> {
+  await delay(700);
+  const listingIndex = mockDatabase.rdfListings.findIndex(l => l.id === id);
+  if (listingIndex === -1) return false;
+  mockDatabase.rdfListings[listingIndex].status = status;
+  return true;
+}
+
+export async function createTransaction(tx: Omit<Transaction, 'id' | 'date'>): Promise<Transaction> {
+  await delay(1200);
+  const newTx: Transaction = {
+    ...tx,
+    id: `tx_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    date: new Date().toISOString()
+  };
+  mockDatabase.transactions.push(newTx);
+  return newTx;
+}
