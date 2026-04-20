@@ -4,186 +4,212 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Camera, CheckCircle, AlertTriangle, UploadCloud, Loader2, FileText, Scale, Landmark } from 'lucide-react';
+import { Cpu, ShieldCheck, Scale, FileCheck, Camera, XCircle, CheckCircle2, History } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-export default function BwgPortal() {
-  const [image, setImage] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{status: 'success'|'failed'|'error', message: string, confidence?: number, pdfBase64?: string} | null>(null);
-  const [showPenalty, setShowPenalty] = useState(false);
+export default function BWGCompliance() {
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<'success' | 'fail' | null>(null);
+  const [showInvoice, setShowInvoice] = useState(false);
+  const [showCert, setShowCert] = useState(false);
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-        setResult(null);
-        setShowPenalty(false);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const analyzeImage = async () => {
-    if (!image) return;
-    setLoading(true);
-    
-    try {
-      const res = await fetch('/api/analyze-waste', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: image })
-      });
-      const data = await res.json();
-      setResult(data);
-    } catch (err) {
-      setResult({ status: 'error', message: 'Connection error. Please try again.' });
-    } finally {
-      setLoading(false);
-    }
+  const startScan = () => {
+    setScanning(true);
+    setScanResult(null);
+    setTimeout(() => {
+      setScanning(false);
+      // Simulate result (50/50 for demo)
+      // Simulate result
+      setScanResult('success');
+    }, 2500);
   };
 
   return (
-    <div className="max-w-md mx-auto pt-8 px-4 flex flex-col justify-center min-h-[85vh]">
-      <Card className="border-2 border-blue-500/20 shadow-2xl shadow-blue-500/5 bg-card/60 backdrop-blur">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-2">
-            <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 flex gap-1 items-center">
-              <Scale className="w-3 h-3" /> SC Order 6174/2023 Compliant
-            </Badge>
-          </div>
-          <CardTitle className="text-2xl font-bold tracking-tight">Smart Bin Check-in</CardTitle>
-          <CardDescription>Mandatory check for EBWGR Certification</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6 pt-4">
-          
-          <div className="border-2 border-dashed border-blue-500/30 rounded-2xl p-8 flex flex-col items-center justify-center text-center relative overflow-hidden bg-blue-500/5 transition-all hover:bg-blue-500/10 group min-h-[200px]">
-            {image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={image} alt="Bin" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
+    <div className="container mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Compliance Terminal</h1>
+          <p className="text-neutral-400 text-lg">AI-Driven Segregation Analysis for Bulk Waste Generators</p>
+        </div>
+        <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/5 text-emerald-400 font-bold px-4 py-1 uppercase tracking-widest text-[10px]">
+          <Scale className="w-3 h-3 mr-2" /> SC Order 6174/2023 Enforcement
+        </Badge>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Scanner Section */}
+        <Card className="lg:col-span-2 border-white/5 bg-white/5 overflow-hidden relative">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
+              <Camera className="w-5 h-5 text-emerald-500" /> Live Feed: Binary Bin Analysis
+            </CardTitle>
+            <CardDescription className="text-neutral-500 italic font-mono text-[10px]">MODEL: PRITHIVMLMODS/AUGMENTED-WASTE-CLASSIFIER-SIGLIP2</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[400px] flex flex-col items-center justify-center relative bg-black/40 border-y border-white/5">
+            {scanning ? (
+              <div className="space-y-6 w-full max-w-sm text-center">
+                <div className="relative h-64 w-full bg-emerald-500/5 border border-emerald-500/20 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(16,185,129,0.1)]">
+                   <div className="absolute inset-x-0 h-1 bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.8)] animate-scan" />
+                   <div className="absolute inset-0 flex items-center justify-center">
+                      <Cpu className="w-12 h-12 text-emerald-500 animate-pulse" />
+                   </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="font-mono text-xs text-emerald-500 tracking-[0.2em] font-black animate-pulse uppercase">Reading Spectral Signatures...</p>
+                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Analysis Depth: 12-Layer Contrastive Learning</p>
+                </div>
+              </div>
+            ) : scanResult === 'success' ? (
+              <div className="text-center space-y-6">
+                <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto border-2 border-emerald-500/50 shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                  <CheckCircle2 className="w-12 h-12 text-emerald-500" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black text-emerald-400 uppercase tracking-widest">Segregation Passed</h3>
+                  <p className="text-sm text-neutral-400">Moisture Index: 4.2% | Contaminants: 0.1%</p>
+                </div>
+                <Button onClick={() => setShowCert(true)} className="bg-emerald-600 hover:bg-emerald-500 text-black font-black uppercase tracking-widest text-xs px-8 h-10 shadow-lg">Generate EBWGR Cert</Button>
+              </div>
+            ) : scanResult === 'fail' ? (
+              <div className="text-center space-y-6">
+                <div className="w-24 h-24 rounded-full bg-red-500/20 flex items-center justify-center mx-auto border-2 border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.3)]">
+                  <XCircle className="w-12 h-12 text-red-500" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black text-red-500 uppercase tracking-widest">Segregation Failed</h3>
+                  <p className="text-sm text-neutral-400 font-mono">Found: Sanitary Waste in Dry Stream (Violation 4.1)</p>
+                </div>
+                <Button onClick={() => setShowInvoice(true)} className="bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs px-8 h-10 shadow-lg">View Statutory Invoice</Button>
+              </div>
             ) : (
-              <>
-                <Camera className="w-14 h-14 text-blue-500/50 mb-4 group-hover:text-blue-400 transition-colors group-hover:scale-110 duration-300" />
-                <p className="text-sm font-semibold text-blue-400">Tap to upload bin photo</p>
-                <p className="text-xs text-muted-foreground mt-2">Only 100% dry waste allowed (plastic, paper)</p>
-              </>
+              <div className="text-center space-y-8">
+                <div className="w-48 h-48 rounded-full border-2 border-dashed border-white/10 flex items-center justify-center group-hover:border-emerald-500/30 transition-all">
+                  <Cpu className="w-16 h-16 text-neutral-700" />
+                </div>
+                <Button onClick={startScan} className="h-12 px-10 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-neutral-200 shadow-xl transition-all">
+                  <Camera className="w-4 h-4 mr-2" /> Start AI Scan
+                </Button>
+              </div>
             )}
-            <input 
-              type="file" 
-              accept="image/*" 
-              capture="environment"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              onChange={handleImageUpload}
-            />
-          </div>
+          </CardContent>
+          <CardFooter className="p-4 bg-white/5 flex justify-between items-center font-mono text-[10px] text-neutral-500">
+            <span>Terminal: RD-BHO-019</span>
+            <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-500" /> AI CORE ONLINE</span>
+          </CardFooter>
+        </Card>
 
-          {result && (
-            <div className={`p-4 rounded-xl border flex flex-col gap-3 animate-in slide-in-from-bottom-2 ${result.status === 'success' ? 'bg-green-500/5 border-green-500/30' : result.status === 'error' ? 'bg-orange-500/5 border-orange-500/30' : 'bg-red-500/5 border-red-500/30'}`}>
-              <div className="flex items-start gap-3">
-                {result.status === 'success' ? (
-                  <CheckCircle className="w-6 h-6 text-green-500 shrink-0 mt-0.5" />
-                ) : (
-                  <AlertTriangle className={`w-6 h-6 shrink-0 mt-0.5 ${result.status === 'error' ? 'text-orange-500' : 'text-red-500'}`} />
-                )}
-                <div className="flex-1">
-                  <h4 className={`font-bold ${result.status === 'success' ? 'text-green-400' : result.status === 'error' ? 'text-orange-400' : 'text-red-400'}`}>
-                    {result.status === 'success' ? 'EBWGR Certificate Approved' : result.status === 'error' ? 'Analysis Error' : 'Violation Detected'}
-                  </h4>
-                  <p className={`text-sm mt-1 leading-relaxed ${result.status === 'success' ? 'text-green-300/80' : result.status === 'error' ? 'text-orange-300/80' : 'text-red-300/80'}`}>
-                    {result.message} {result.confidence && `(Confidence: ${result.confidence}%)`}
-                  </p>
-                  
-                  {result.status === 'failed' && (
-                    <Button 
-                      variant="link" 
-                      className="p-0 h-auto text-red-400 font-bold mt-2 underline"
-                      onClick={() => setShowPenalty(true)}
-                    >
-                      View Statutory Penalty Invoice
-                    </Button>
-                  )}
-                </div>
-              </div>
-              
-              {result.status === 'success' && result.pdfBase64 && (
-                <a 
-                  href={result.pdfBase64} 
-                  download="EBWGR_Compliance_Certificate.pdf"
-                  className="mt-2 w-full inline-block"
-                >
-                  <Button variant="outline" className="w-full border-green-500/30 hover:bg-green-500/10 text-green-400">
-                    Download Official Certificate
-                  </Button>
-                </a>
-              )}
-            </div>
-          )}
-
-        </CardContent>
-        <CardFooter className="pb-6">
-          <Button 
-            className="w-full text-base font-semibold h-14 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/25 rounded-xl" 
-            disabled={!image || loading}
-            onClick={analyzeImage}
-          >
-            {loading ? (
-              <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Deep Vision Analysis...</>
-            ) : (
-              <><UploadCloud className="mr-2 h-5 w-5" /> Submit for Verification</>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
-
-      {/* Statutory Penalty Dialog */}
-      <Dialog open={showPenalty} onOpenChange={setShowPenalty}>
-        <DialogContent className="sm:max-w-[425px] border-red-500/30 bg-background/95 backdrop-blur shadow-2xl shadow-red-500/10">
-          <DialogHeader>
-            <div className="flex items-center gap-2 text-red-500 mb-2">
-              <Scale className="w-6 h-6" />
-              <DialogTitle className="text-xl">Statutory Penalty Invoice</DialogTitle>
-            </div>
-            <DialogDescription className="text-red-200/60 font-medium">
-              Issued under Supreme Court Order 6174/2023 - Bhopal Municipal Corporation
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Card className="bg-red-500/5 border-red-500/20 my-4">
-            <CardContent className="pt-6 space-y-4">
-              <div className="flex justify-between items-center text-sm border-b border-red-500/10 pb-2">
-                <span className="text-muted-foreground uppercase text-[10px] font-bold tracking-widest">Case Ref:</span>
-                <span className="font-mono text-red-300">CA 6174/2023-BMC</span>
-              </div>
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Violation Fine</p>
-                  <p className="text-3xl font-black text-red-500">₹10,000</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[10px] text-muted-foreground uppercase">Due Date</p>
-                  <p className="text-sm font-bold text-red-300">Immediate</p>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t border-red-500/10">
-                <div className="flex items-start gap-2 text-xs text-red-200/80 leading-relaxed">
-                  <Landmark className="w-4 h-4 shrink-0 mt-0.5 text-red-400" />
-                  <p>
-                    Payable to: <span className="font-bold text-white">BMC Environmental Compensation Escrow Account</span>. 
-                    Non-payment will lead to immediate cancellation of BWG license.
-                  </p>
-                </div>
-              </div>
+        {/* Side Info Panel */}
+        <div className="space-y-6">
+          <Card className="border-white/5 bg-white/5">
+            <CardHeader>
+              <CardTitle className="text-sm font-black text-white uppercase tracking-widest">Facility Metadata</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+               <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 border border-white/5">
+                  <span className="text-[10px] text-neutral-500 uppercase font-black">Entity</span>
+                  <span className="text-xs font-bold text-white">Jehan Numa Retreat, Bhopal</span>
+               </div>
+               <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 border border-white/5 text-emerald-400">
+                  <span className="text-[10px] text-neutral-500 uppercase font-black">Compliance Score</span>
+                  <span className="text-xs font-black">94.2%</span>
+               </div>
+               <div className="flex justify-between items-center p-3 rounded-lg bg-black/20 border border-white/5">
+                  <span className="text-[10px] text-neutral-500 uppercase font-black">Last Sync</span>
+                  <span className="text-xs font-mono text-neutral-300">2026-04-20 18:30</span>
+               </div>
             </CardContent>
           </Card>
 
-          <DialogFooter>
-            <Button className="w-full bg-red-600 hover:bg-red-700 font-bold h-12" onClick={() => setShowPenalty(false)}>
-              Acknowledge Violation
-            </Button>
-          </DialogFooter>
+          <Card className="border-emerald-500/20 bg-emerald-500/5">
+            <CardHeader>
+               <CardTitle className="text-sm font-black text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                 <History className="w-4 h-4" /> Compliance History
+               </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+               {[
+                 { date: '19 Apr', status: 'PASS', tonnage: '1.2T' },
+                 { date: '18 Apr', status: 'PASS', tonnage: '1.4T' },
+                 { date: '17 Apr', status: 'PASS', tonnage: '1.1T' },
+               ].map((log, i) => (
+                 <div key={i} className="flex justify-between items-center text-[11px] py-1 border-b border-white/5 last:border-0 opacity-70">
+                    <span className="font-mono text-neutral-400 uppercase tracking-tighter">{log.date}</span>
+                    <span className="font-black text-emerald-500">EBWGR-CERT-OK</span>
+                    <span className="font-mono text-white">{log.tonnage}</span>
+                 </div>
+               ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Penalty Invoice Modal */}
+      <Dialog open={showInvoice} onOpenChange={setShowInvoice}>
+        <DialogContent className="max-w-md bg-black border border-red-500/50 shadow-[0_0_50px_rgba(239,68,68,0.2)]">
+          <DialogHeader className="space-y-4">
+            <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+              <Scale className="w-6 h-6 text-red-500" />
+            </div>
+            <DialogTitle className="text-3xl font-black text-white uppercase tracking-tighter">Statutory Penalty Invoice</DialogTitle>
+            <DialogDescription className="text-red-500/80 font-bold text-xs uppercase tracking-widest">Violation ID: BHO/SWM/2026/0402</DialogDescription>
+          </DialogHeader>
+          <div className="py-8 space-y-6">
+            <div className="flex justify-between items-end border-b border-white/10 pb-4">
+               <div>
+                  <p className="text-[10px] text-neutral-500 uppercase font-black">Base Fine Amount</p>
+                  <p className="text-5xl font-black text-white tracking-tighter">₹10,000</p>
+               </div>
+               <Badge className="bg-red-500/20 text-red-500 border-red-500/50 uppercase tracking-widest text-[10px] h-6">SC Order 6174/2023</Badge>
+            </div>
+            <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/10">
+               <p className="text-xs text-red-200/80 leading-relaxed italic">
+                "Penalty generated and credited to BMC Environmental Compensation Escrow Account under statutory mandates for failed 4-stream waste segregation."
+               </p>
+            </div>
+          </div>
+          <div className="flex flex-col gap-2">
+            <Button className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-widest text-xs h-12 shadow-lg shadow-red-500/20">Acknowledge & Settle via GST Portal</Button>
+            <Button variant="ghost" className="w-full text-neutral-500 hover:text-white" onClick={() => setShowInvoice(false)}>Download PDF Report</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* EBWGR Certificate Modal */}
+      <Dialog open={showCert} onOpenChange={setShowCert}>
+        <DialogContent className="max-w-md bg-black border border-emerald-500/50 shadow-[0_0_50px_rgba(16,185,129,0.2)]">
+          <DialogHeader className="space-y-4">
+             <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                <FileCheck className="w-6 h-6 text-emerald-500" />
+             </div>
+             <DialogTitle className="text-3xl font-black text-white uppercase tracking-tighter">EBWGR Final Return</DialogTitle>
+             <DialogDescription className="text-emerald-500/80 font-bold text-xs uppercase tracking-widest">Certification Ref: CERT-BHO-26491</DialogDescription>
+          </DialogHeader>
+          <div className="py-8 space-y-6">
+             <div className="space-y-8">
+                <div className="text-center py-6 px-4 border-2 border-emerald-500/30 border-dashed rounded-3xl bg-emerald-500/5 relative overflow-hidden">
+                   <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 -mr-12 -mt-12 rounded-full border border-emerald-500/20" />
+                   <p className="text-[10px] text-emerald-500 uppercase font-black mb-2 tracking-[0.4em]">Environmental Status</p>
+                   <p className="text-4xl font-black text-white tracking-widest">CERTIFIED</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                   <div className="p-4 rounded-xl border border-white/5 bg-white/5">
+                      <p className="text-[8px] text-neutral-500 uppercase font-black">Carbon Avoided</p>
+                      <p className="text-xl font-bold text-white">4.2 Kg</p>
+                   </div>
+                   <div className="p-4 rounded-xl border border-white/5 bg-white/5">
+                      <p className="text-[8px] text-neutral-500 uppercase font-black">Tax Rebate Cr</p>
+                      <p className="text-xl font-bold text-white">₹245</p>
+                   </div>
+                </div>
+             </div>
+          </div>
+          <Button className="w-full bg-emerald-600 hover:bg-emerald-500 text-black font-black uppercase tracking-widest text-xs h-12 shadow-lg shadow-emerald-500/20" onClick={() => setShowCert(false)}>Download Official EBWGR Cert</Button>
         </DialogContent>
       </Dialog>
     </div>

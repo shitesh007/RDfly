@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { addWasteLog } from '@/lib/mock-db';
+import { supabase } from '@/lib/supabase';
 
 const HF_MODEL_URL = "https://api-inference.huggingface.co/models/prithivMLmods/Augmented-Waste-Classifier-SigLIP2";
 
@@ -78,10 +78,23 @@ export async function POST(request: Request) {
 
 async function generateResponse(isSuccess: boolean, detectedLabel: string, confidence: number) {
   const confidencePercent = Math.round(confidence * 100);
+  const penalty = isSuccess ? 0 : 10000;
+
+  try {
+    const { error } = await supabase.from('waste_logs').insert({
+      compliance_status: isSuccess,
+      detected_label: detectedLabel,
+      confidence_score: confidence,
+      penalty_amount: penalty,
+      tonnage: 0.5, // Mock tonnage for certificate
+    });
+
+    if (error) throw error;
+  } catch (err) {
+    console.error("Supabase Log Error:", err);
+  }
 
   if (isSuccess) {
-    addWasteLog({ compliance_status: true, notes: `Detected: ${detectedLabel}` });
-    
     // Generate PDF
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([600, 400]);
@@ -111,13 +124,10 @@ async function generateResponse(isSuccess: boolean, detectedLabel: string, confi
       pdfBase64: `data:application/pdf;base64,${pdfBase64}`
     });
   } else {
-    // Failed
-    addWasteLog({ compliance_status: false, notes: `Detected: ${detectedLabel}` });
-    
     return NextResponse.json({
       status: 'failed',
       confidence: confidencePercent,
-      message: `Penalty Flagged: Mixed waste detected (${detectedLabel}).`
+      message: `Penalty Flagged: Mixed waste detected (${detectedLabel}). Penalty: ₹10,000.`
     });
   }
 }

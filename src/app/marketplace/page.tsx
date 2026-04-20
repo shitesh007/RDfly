@@ -1,226 +1,247 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useEffect, useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { getRdfListings, updateRdfListingStatus, createTransaction, RdfListing } from '@/lib/mock-db';
-import { CheckCircle, Factory, Flame, Orbit, Loader2, IndianRupee } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { ShoppingBag, Calculator, Loader2 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
-export default function Marketplace() {
-  const [listings, setListings] = useState<RdfListing[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedListing, setSelectedListing] = useState<RdfListing | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [processing, setProcessing] = useState(false);
+interface Product {
+  id: string;
+  type: string;
+  seller: string;
+  unit: string;
+  price: number;
+  details: string;
+  metric: string;
+  stock: string;
+}
+
+export default function MarketplacePage() {
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState(1);
+  const [checkoutStep, setCheckoutStep] = useState<'details' | 'summary'>('details');
+  const [loading, setLoading] = useState(false);
+  const [liveListings, setLiveListings] = useState<Product[]>([]);
 
   useEffect(() => {
+    const fetchListings = async () => {
+      const { data, error } = await supabase
+        .from('marketplace_listings')
+        .select('*')
+        .eq('status', 'Available');
+      
+      if (data && !error) {
+        setLiveListings(data.map((item: any) => ({
+          id: item.id,
+          type: item.material_type,
+          seller: 'Industrial Node', // Mocked or joined from users table
+          unit: item.material_type === 'CBG' ? 'Kg' : 'MT',
+          price: item.price_per_unit,
+          details: item.metric_verified,
+          metric: item.metric_verified,
+          stock: `${item.volume_tonnes} ${item.material_type === 'CBG' ? 'Kg' : 'MT'}`
+        })));
+      }
+    };
     fetchListings();
   }, []);
 
-  const fetchListings = async () => {
-    setLoading(true);
-    const data = await getRdfListings();
-    setListings(data);
-    setLoading(false);
-  };
+  const baseAmount = selectedProduct ? selectedProduct.price * quantity : 0;
+  const commission = baseAmount * 0.02;
+  const totalAmount = baseAmount + commission;
 
-  const handlePurchase = async () => {
-    if (!selectedListing) return;
-    
-    setProcessing(true);
-    
-    const basePrice = selectedListing.pricePerTonne * selectedListing.volumeTonnes;
-    const commission = basePrice * 0.02;
-    const totalAmount = basePrice + commission;
+  const handleTrade = async () => {
+    if (!selectedProduct) return;
+    setLoading(true);
 
     try {
-      // 1. Create the transaction record
-      await createTransaction({
-        buyerName: "Govindpura Thermal Plant",
-        listingId: selectedListing.id,
-        totalAmount: totalAmount,
-        platformCommission: commission
+      // 1. Log Transaction
+      const { error: txError } = await supabase.from('transactions').insert({
+        listing_id: selectedProduct.id,
+        base_amount: baseAmount,
+        commission_amount: commission,
+        total_amount: totalAmount,
       });
 
-      // 2. Update listing status to sold
-      await updateRdfListingStatus(selectedListing.id, 'sold');
+      if (txError) throw txError;
 
-      // 3. Refresh local listings
-      await fetchListings();
+      // 2. Update Listing Status
+      const { error: updateError } = await supabase
+        .from('marketplace_listings')
+        .update({ status: 'Sold' })
+        .eq('id', selectedProduct.id);
 
-      setProcessing(false);
-      setSuccess(true);
+      if (updateError) throw updateError;
+
+      toast.success("Trade Executed", {
+        description: `Order successfully logged in the RDfly protocol. Transaction ID: TXN-${Math.random().toString(36).substring(7).toUpperCase()}`
+      });
       
-      setTimeout(() => {
-        setSuccess(false);
-        setSelectedListing(null);
-      }, 4000);
+      setSelectedProduct(null);
+      setLiveListings(prev => prev.filter(l => l.id !== selectedProduct.id));
     } catch (error) {
-      console.error("Transaction failed:", error);
-      setProcessing(false);
-      // In a real app, we'd show an error message
+      toast.error("Trade Failed", {
+        description: "Could not finalize settlement on Supabase."
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-8 pt-6 pb-12 animate-in fade-in duration-500">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-4xl font-extrabold tracking-tight text-orange-500 flex items-center gap-3 drop-shadow-sm">
-          <Flame className="w-10 h-10 text-orange-500" /> B2B RDF Marketplace
-        </h1>
-        <p className="text-muted-foreground text-lg max-w-3xl">Direct P2P exchange connecting certified Material Recovery Facilities (MRFs) with Thermal & Cement Plants for sustainable energy.</p>
+    <div className="container mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-700">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Circular Fuel Marketplace</h1>
+          <p className="text-neutral-400 text-lg italic">B2B Sustainable Resources Exchange - Bhopal Hub</p>
+        </div>
+        <div className="flex gap-4">
+           <Card className="px-4 py-2 bg-emerald-500/10 border-emerald-500/20">
+              <p className="text-[8px] font-black text-emerald-500 uppercase tracking-widest">MoP Co-firing Mandate</p>
+              <p className="text-sm font-black text-white">5% BIOMASS REQ.</p>
+           </Card>
+           <Card className="px-4 py-2 bg-blue-500/10 border-blue-500/20">
+              <p className="text-[8px] font-black text-blue-500 uppercase tracking-widest">SATAT Pricing</p>
+              <p className="text-sm font-black text-white">₹72/kg FIXED</p>
+           </Card>
+        </div>
       </div>
 
-      <Card className="border-orange-500/30 bg-card/40 backdrop-blur shadow-2xl shadow-orange-500/5">
-        <CardHeader className="pb-6 border-b border-orange-500/10">
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="text-2xl text-orange-50">Exchange Order Book</CardTitle>
-              <CardDescription className="text-base mt-1">Logged in as: <span className="font-semibold text-orange-300">Govindpura Thermal Plant</span></CardDescription>
-            </div>
-            <Badge className="bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30 px-3 py-1 text-sm">
-              <Orbit className="w-4 h-4 mr-2 animate-spin-slow" /> Live Feed
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="pt-6">
-          {loading ? (
-            <div className="py-20 flex flex-col items-center justify-center space-y-4">
-              <Loader2 className="w-10 h-10 text-orange-500 animate-spin" />
-              <p className="text-orange-300/70 font-medium">Fetching market listings...</p>
-            </div>
-          ) : (
-            <div className="rounded-lg border border-muted/50 overflow-hidden">
-              <Table>
-                <TableHeader className="bg-muted/30">
-                  <TableRow>
-                    <TableHead className="w-[250px] font-semibold">Seller / MRF Facility</TableHead>
-                    <TableHead className="font-semibold">Volume Available</TableHead>
-                    <TableHead className="font-semibold">Calorific Value</TableHead>
-                    <TableHead className="font-semibold">Market Ask (₹/Tonne)</TableHead>
-                    <TableHead className="font-semibold">Trading Status</TableHead>
-                    <TableHead className="text-right font-semibold">Execution</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {listings.map((listing) => (
-                    <TableRow key={listing.id} className="border-b-muted/30 hover:bg-muted/20 transition-colors h-16">
-                      <TableCell className="font-medium flex items-center gap-3 pt-3">
-                        <div className="w-8 h-8 rounded-full bg-orange-500/10 flex items-center justify-center">
-                          <Factory className="w-4 h-4 text-orange-400" />
-                        </div>
-                        {listing.sellerName}
-                      </TableCell>
-                      <TableCell className="font-black text-lg">{listing.volumeTonnes}<span className="text-sm font-medium text-muted-foreground ml-1">T</span></TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="bg-orange-950/40 text-orange-400 border-orange-500/30">
-                          {listing.calorificValueKcal} kcal/kg
-                        </Badge>
-                        <div className="text-xs text-muted-foreground mt-1.5 ml-1">Moisture: {listing.moistureContentPercent}%</div>
-                      </TableCell>
-                      <TableCell className="font-mono text-lg text-orange-100">₹{listing.pricePerTonne.toLocaleString()}</TableCell>
-                      <TableCell>
-                        {listing.status === 'available' ? (
-                          <Badge className="bg-green-500/10 text-green-400 hover:bg-green-500/20 border-green-500/30 font-semibold tracking-wide shadow-[0_0_10px_rgba(34,197,94,0.1)]">Active Listing</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="bg-muted text-muted-foreground border-muted-foreground/30 font-semibold tracking-wide">Sold / Settled</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button 
-                          disabled={listing.status === 'sold'}
-                          className={`font-semibold shadow-lg border-none transition-all hover:scale-105 ${listing.status === 'sold' ? 'bg-muted text-muted-foreground' : 'bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-500 hover:to-amber-400 shadow-orange-500/20'}`}
-                          onClick={() => setSelectedListing(listing)}
-                        >
-                          {listing.status === 'sold' ? 'Settled' : 'Procure RDF'}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+         {liveListings.map((item) => (
+           <Card key={item.id} className="group border-white/5 bg-white/5 hover:border-emerald-500/30 transition-all flex flex-col">
+              <CardHeader className="p-6">
+                 <div className="flex justify-between items-start mb-4">
+                    <Badge variant="outline" className="text-[10px] border-emerald-500/20 bg-emerald-500/5 text-emerald-400 font-bold uppercase tracking-widest">
+                       {item.metric}
+                    </Badge>
+                    <span className="text-[10px] font-mono text-neutral-600">ID: {item.id}</span>
+                 </div>
+                 <CardTitle className="text-2xl font-black text-white tracking-tighter uppercase mb-1">{item.type}</CardTitle>
+                 <CardDescription className="text-emerald-500/60 font-bold italic text-sm">{item.seller}</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6 pt-0 flex-1 space-y-6">
+                 <p className="text-sm text-neutral-400 leading-relaxed min-h-[40px]">
+                    {item.details}
+                 </p>
+                 <div className="flex gap-4 p-4 rounded-xl border border-white/5 bg-black/40">
+                    <div className="flex-1">
+                       <p className="text-[8px] text-neutral-500 uppercase font-black mb-1">Market Price</p>
+                       <p className="text-2xl font-black text-white tracking-tighter">₹{item.price.toLocaleString()} <span className="text-[10px] text-neutral-500">/{item.unit}</span></p>
+                    </div>
+                    <div className="w-px bg-white/5" />
+                    <div className="flex-1">
+                       <p className="text-[8px] text-neutral-500 uppercase font-black mb-1">Available</p>
+                       <p className="text-lg font-bold text-neutral-300 tracking-tighter">{item.stock}</p>
+                    </div>
+                 </div>
+              </CardContent>
+              <CardFooter className="p-6 border-t border-white/5">
+                 <Button 
+                   onClick={() => { setSelectedProduct(item); setCheckoutStep('details'); }}
+                   className="w-full bg-emerald-500 font-black uppercase tracking-widest text-xs h-10 text-black hover:bg-emerald-400 shadow-lg shadow-emerald-500/10"
+                 >
+                    Procure Resource
+                 </Button>
+              </CardFooter>
+           </Card>
+         ))}
+      </div>
 
-      <Dialog open={!!selectedListing} onOpenChange={(open) => !open && !processing && !success && setSelectedListing(null)}>
-        <DialogContent className="sm:max-w-[450px] border-orange-500/30 bg-background/95 backdrop-blur shadow-2xl shadow-orange-500/10">
-          <DialogHeader>
-            <DialogTitle className="text-2xl text-orange-50">Market Settlement Invoice</DialogTitle>
-            <DialogDescription className="text-base text-muted-foreground/80">
-              Generated via Smart-Fuel P2P Settlement Layer.
-            </DialogDescription>
+      {/* Procurement Modal */}
+      <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
+        <DialogContent className="max-w-md bg-black border border-white/10 shadow-[0_0_50px_rgba(34,197,94,0.1)]">
+          <DialogHeader className="space-y-4">
+             <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+                   <ShoppingBag className="w-5 h-5 text-emerald-500" />
+                </div>
+                <div>
+                   <DialogTitle className="text-2xl font-black text-white uppercase tracking-tighter">Procurement Order</DialogTitle>
+                   <DialogDescription className="text-neutral-500 text-[10px] font-bold uppercase tracking-widest">Order ID: RD-TXN-REFERENCE</DialogDescription>
+                </div>
+             </div>
           </DialogHeader>
-          
-          {selectedListing && !success && !processing && (
-            <div className="py-6 space-y-5">
-              <div className="flex justify-between items-center text-sm border-b border-muted/30 pb-3">
-                <span className="text-muted-foreground">Supplier MRF:</span>
-                <span className="font-medium text-right dark:text-gray-200">{selectedListing.sellerName}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-muted/30 pb-3">
-                <span className="text-muted-foreground">Volume Secured:</span>
-                <span className="font-bold text-right dark:text-gray-200">{selectedListing.volumeTonnes} Tonnes</span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-muted/30 pb-3">
-                <span className="text-neutral-400">Unit Price:</span>
-                <span className="font-mono text-right text-neutral-200">₹{selectedListing.pricePerTonne.toLocaleString()} / T</span>
-              </div>
-              <div className="flex justify-between items-center text-sm border-b border-muted/30 pb-3">
-                <span className="text-muted-foreground">Base Price:</span>
-                <span className="font-mono text-right dark:text-gray-200">₹{(selectedListing.pricePerTonne * selectedListing.volumeTonnes).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm pb-1 text-blue-400 font-medium">
-                <span className="flex items-center gap-1">SaaS Commission (2%):</span>
-                <span className="font-mono">₹{(selectedListing.pricePerTonne * selectedListing.volumeTonnes * 0.02).toLocaleString()}</span>
-              </div>
-              <div className="pt-5 border-t border-orange-500/20 flex justify-between items-center">
-                <span className="text-lg text-muted-foreground">Final Settlement:</span>
-                <div className="flex flex-col items-end">
-                  <span className="font-mono text-3xl font-bold text-orange-400">₹{(selectedListing.pricePerTonne * selectedListing.volumeTonnes * 1.02).toLocaleString()}</span>
-                  <p className="text-[10px] text-orange-300/50 uppercase tracking-tighter mt-1">Verified via Blockchain Escrow</p>
+
+          {checkoutStep === 'details' ? (
+            <div className="py-6 space-y-6">
+              <div className="space-y-4">
+                <div className="p-4 rounded-xl border border-white/1)0 bg-white/5">
+                  <p className="text-[10px] text-neutral-500 uppercase font-black mb-4">Select Quantity ({selectedProduct?.unit})</p>
+                  <div className="flex gap-4">
+                    <Input 
+                      type="number" 
+                      value={quantity} 
+                      onChange={(e) => setQuantity(Number(e.target.value))}
+                      className="bg-black border-white/10 h-12 text-white font-black text-lg" 
+                    />
+                    <div className="flex-1 flex flex-col justify-center">
+                      <p className="text-xs text-neutral-400">Inventory Status:</p>
+                      <p className="text-xs font-bold text-emerald-500 italic">AVAILABLE IN NODE</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl border border-white/5 bg-black/40 space-y-3">
+                   <div className="flex justify-between items-center text-[10px] text-neutral-500 font-bold uppercase">
+                      <span>Unit Cost</span>
+                      <span className="text-white">₹{selectedProduct?.price.toLocaleString()}</span>
+                   </div>
+                   <div className="flex justify-between items-center text-[10px] text-neutral-500 font-bold uppercase">
+                      <span>Logistics Fee</span>
+                      <span className="text-blue-400">GOVT SUBSIDIZED</span>
+                   </div>
                 </div>
               </div>
+              <Button onClick={() => setCheckoutStep('summary')} className="w-full h-12 bg-white text-black font-black uppercase tracking-widest text-xs hover:bg-neutral-200">Review Calculation</Button>
             </div>
-          )}
-
-          {processing && (
-            <div className="py-12 flex flex-col items-center justify-center text-center space-y-6">
-              <div className="w-16 h-16 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin"></div>
-              <h3 className="text-xl font-bold text-orange-400 animate-pulse">Confirming Transaction on Chain...</h3>
-              <p className="text-sm text-muted-foreground">Updating RDF availability and locking funds.</p>
-            </div>
-          )}
-
-          {success && (
-            <div className="py-10 flex flex-col items-center justify-center text-center space-y-5">
-              <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center animate-in zoom-in duration-300">
-                <CheckCircle className="w-12 h-12 text-green-500" />
+          ) : (
+            <div className="py-6 space-y-8">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-xs font-black text-emerald-500 uppercase tracking-widest mb-4">
+                   <Calculator className="w-4 h-4" /> Settlement Breakdown
+                </div>
+                <div className="space-y-4 border-y border-white/5 py-6">
+                   <div className="flex justify-between text-neutral-400 text-sm font-bold">
+                      <span>Base Procurement ({quantity} {selectedProduct?.unit})</span>
+                      <span className="text-white font-mono">₹{baseAmount.toLocaleString()}</span>
+                   </div>
+                   <div className="flex justify-between text-neutral-400 text-sm font-bold items-center">
+                      <span className="flex items-center gap-2">SaaS Platform Commission <Badge className="text-[8px] bg-blue-500/10 text-blue-400 border-blue-500/20 uppercase">Statutory 2%</Badge></span>
+                      <span className="text-blue-400 font-mono">₹{commission.toLocaleString()}</span>
+                   </div>
+                </div>
+                <div className="flex justify-between items-end pt-4">
+                   <div className="space-y-1">
+                      <p className="text-[10px] text-neutral-500 uppercase font-black">Total P2P Settlement</p>
+                      <p className="text-4xl font-black text-white tracking-tighter">₹{totalAmount.toLocaleString()}</p>
+                   </div>
+                   <p className="text-[10px] text-neutral-500 lowercase font-mono opacity-60">incl. all cess & mda</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-2xl font-bold text-green-400">Procurement Successful</h3>
-                <p className="text-sm text-green-400/70 mt-2 max-w-[280px] mx-auto">Listing updated to SOLD. Logistics orders have been auto-dispatched to MRF.</p>
+              <div className="flex gap-2">
+                 <Button variant="ghost" className="flex-1 text-neutral-500 hover:text-white" onClick={() => setCheckoutStep('details')}>Back</Button>
+                 <Button 
+                   disabled={loading}
+                   onClick={handleTrade}
+                   className="flex-[2] h-12 bg-emerald-600 hover:bg-emerald-500 text-black font-black uppercase tracking-widest text-xs shadow-lg shadow-emerald-500/20"
+                 >
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Confirm & Execute Trade
+                 </Button>
               </div>
-              <Button variant="outline" className="mt-4 border-green-500/30 text-green-400" onClick={() => setSelectedListing(null)}>
-                Download Invoice PDF
-              </Button>
             </div>
           )}
-          
-          <DialogFooter className="pt-2">
-            {!success && !processing && (
-              <Button 
-                onClick={handlePurchase} 
-                className="w-full h-14 text-lg font-bold bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 shadow-[0_0_20px_rgba(234,88,12,0.3)] border-none"
-              >
-                Confirm Procurement
-              </Button>
-            )}
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
