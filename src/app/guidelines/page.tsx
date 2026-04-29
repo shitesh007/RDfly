@@ -94,10 +94,10 @@ export default function KnowledgeHub() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pt-4">
            <div className="space-y-4">
               <h3 className="text-xs font-black text-blue-400 uppercase tracking-widest border-b border-blue-500/20 pb-2 flex items-center gap-2">
-                 <Landmark className="w-3 h-3" /> CAQM MOISTURE CTR
+                 <Landmark className="w-3 h-3" /> CAQM - C&D DEPOT (NO. 97)
               </h3>
               <p className="text-sm text-neutral-400 leading-relaxed italic">
-                 All RDF material listings must maintain a minimum calorific value of **2,500 kcal/kg** with {'<'}15% moisture index as per CAQM Direction 97.
+                 Statutory proof of C&D Waste Deposition at designated BMC centres is mandatory for **CC/OC issuance**. AI-verified receipts can be generated on-node for construction site compliance.
               </p>
            </div>
            <div className="space-y-4">

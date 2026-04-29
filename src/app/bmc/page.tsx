@@ -59,19 +59,22 @@ export default function BMCDashboard() {
 
   const handleGovSync = () => {
     setSyncing(true);
+    const sbmUrl = process.env.NEXT_PUBLIC_SBM_U_PORTAL_URL;
+    const gobardhanUrl = process.env.NEXT_PUBLIC_GOBARDHAN_PORTAL_URL;
+
     setTimeout(() => {
       setSyncing(false);
       const simulatedResponse = {
         status: "success",
-        portal: "GOBARdhan",
+        portals_targeted: [sbmUrl, gobardhanUrl],
         timestamp: new Date().toISOString(),
-        payload: { tpd: "1,060", city: "Bhopal", region: "Central" }
+        payload: { tpd: stats.diverted, city: "Bhopal", region: "Central" }
       };
       
-      console.log("SYNC API RESPONSE:", simulatedResponse);
+      console.log("SYNC API TARGETED:", simulatedResponse);
       
-      toast.success("Sync Complete", {
-        description: "1,060 TPD data successfully uploaded to GOBARdhan & SBM(U) Portals.",
+      toast.success("Portal Sync Complete", {
+        description: `Successfully transmitted ${stats.diverted} TPD to GOBARdhan & SBM(U).`,
       });
     }, 2000);
   };
@@ -101,7 +104,28 @@ export default function BMCDashboard() {
       {/* KPI Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Smart Bins (ICCC)', value: '130', unit: 'UNITS', icon: Activity, color: 'text-blue-500' },
+          { 
+            label: 'Smart Bins (ICCC)', 
+            value: '130', 
+            unit: 'UNITS', 
+            icon: Activity, 
+            color: 'text-red-500', 
+            extra: (
+              <div className="mt-4 space-y-2">
+                <div className="flex justify-between items-center text-[8px] font-black uppercase text-neutral-500">
+                  <span>Avg Fill Level</span>
+                  <span className="text-red-500">92% CRITICAL</span>
+                </div>
+                <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden border border-white/5">
+                   <div className="h-full bg-red-500 animate-pulse w-[92%]" />
+                </div>
+                <p className="text-[7px] font-black uppercase text-red-400 leading-tight">
+                  <span className="inline-block w-1 h-1 rounded-full bg-red-500 animate-ping mr-1" />
+                  Targeted Truck Routing Triggered (&gt;80%)
+                </p>
+              </div>
+            )
+          },
           { label: 'Waste Diverted', value: stats.diverted, unit: 'TPD', icon: Truck, color: 'text-emerald-500' },
           { label: 'Landfill Avoided', value: stats.landfill, unit: 'KPI', icon: ShieldCheck, color: 'text-emerald-400' },
           { label: 'System Uptime', value: '99.9', unit: '%', icon: Activity, color: 'text-blue-400' },
@@ -113,7 +137,9 @@ export default function BMCDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-black text-white tracking-tighter">{kpi.value} <span className="text-xs uppercase text-neutral-500">{kpi.unit}</span></div>
-              <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest mt-1">+2.4% From Yesterday</p>
+              {kpi.extra ? kpi.extra : (
+                <p className="text-[10px] text-emerald-500 font-bold uppercase tracking-widest mt-1">+2.4% From Yesterday</p>
+              )}
             </CardContent>
           </Card>
         ))}

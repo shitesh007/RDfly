@@ -101,7 +101,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-b from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="p-8">
                 <CardTitle className="text-2xl font-black text-white flex items-center gap-3">
-                  BWG Portal <ArrowRight className="w-5 h-5 text-emerald-500 group-hover:translate-x-2 transition-transform" />
+                  Enter as BWG Node <ArrowRight className="w-5 h-5 text-emerald-500 group-hover:translate-x-2 transition-transform" />
                 </CardTitle>
                 <CardDescription className="text-neutral-400 italic">For Hotels, Malls & Societies</CardDescription>
               </CardHeader>
@@ -116,7 +116,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="p-8">
                 <CardTitle className="text-2xl font-black text-white flex items-center gap-3">
-                  Logistics Dash <ArrowRight className="w-5 h-5 text-blue-500 group-hover:translate-x-2 transition-transform" />
+                  Enter as BMC Admin <ArrowRight className="w-5 h-5 text-blue-500 group-hover:translate-x-2 transition-transform" />
                 </CardTitle>
                 <CardDescription className="text-neutral-400 italic">For Municipal Authorities</CardDescription>
               </CardHeader>
@@ -131,7 +131,7 @@ export default function Home() {
               <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="p-8">
                 <CardTitle className="text-2xl font-black text-white flex items-center gap-3">
-                  Marketplace <ArrowRight className="w-5 h-5 text-orange-500 group-hover:translate-x-2 transition-transform" />
+                  Enter as Buyer <ArrowRight className="w-5 h-5 text-orange-500 group-hover:translate-x-2 transition-transform" />
                 </CardTitle>
                 <CardDescription className="text-neutral-400 italic">For Power Plants & MRFs</CardDescription>
               </CardHeader>

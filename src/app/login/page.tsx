@@ -25,6 +25,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Safety Redirect: In demo mode, the login page is deprecated.
+  require('react').useEffect(() => {
+    router.push('/');
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);

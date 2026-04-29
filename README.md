@@ -1,8 +1,28 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Smart-Fuel Exchange
+
+Smart-Fuel Exchange is an innovative web application designed to optimize waste management through AI-driven waste classification, a dynamic marketplace, and a city-wide dashboard for monitoring. Built for modern sustainability needs, this application streamlines the process of recycling and waste exchange.
+
+## Features
+- **AI Waste Classification**: Utilizes a vision-capable AI model (Hugging Face) to accurately classify waste.
+- **Marketplace**: A dynamic platform where users can trade or sell processed waste/materials.
+- **City Dashboard**: Provides city officials and administrators with real-time data on waste management metrics.
+- **Modern UI**: Designed with a sleek, user-friendly interface using Tailwind CSS and Radix UI components.
+
+## Tech Stack
+- **Frontend**: Next.js 15, React 19, Tailwind CSS, Lucide React, Recharts
+- **Backend**: Next.js API Routes, Supabase (PostgreSQL)
+- **AI/ML**: Hugging Face Inference API, Google Generative AI
+- **Utilities**: pdf-lib, html2canvas, jspdf
 
 ## Getting Started
 
-First, run the development server:
+First, install the dependencies:
+
+```bash
+npm install
+```
+
+Then, run the development server:
 
 ```bash
 npm run dev
@@ -16,21 +36,12 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
+To run this project locally, you will need to add environment variables. See `.env.example` for the required keys.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new). Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

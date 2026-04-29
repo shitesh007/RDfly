@@ -56,9 +56,9 @@ export function Navigation() {
             <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
             Live Network: Adampur Hub
           </div>
-          <button className="h-10 px-6 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-black font-black text-xs uppercase tracking-widest transition-all">
-            Login
-          </button>
+          <div className="h-10 px-4 flex items-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 font-black text-[10px] uppercase tracking-[0.2em]">
+            ECO-OS LIVE NODE
+          </div>
         </div>
       </div>
     </nav>

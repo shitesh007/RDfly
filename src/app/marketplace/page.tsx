@@ -33,28 +33,44 @@ export default function MarketplacePage() {
   const [checkoutStep, setCheckoutStep] = useState<'details' | 'summary'>('details');
   const [loading, setLoading] = useState(false);
   const [liveListings, setLiveListings] = useState<Product[]>([]);
+  const [ledger, setLedger] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchListings = async () => {
-      const { data, error } = await supabase
-        .from('marketplace_listings')
-        .select('*')
-        .eq('status', 'Available');
-      
-      if (data && !error) {
-        setLiveListings(data.map((item: any) => ({
+      try {
+        const { data, error } = await supabase
+          .from('marketplace_listings')
+          .select('*')
+          .eq('status', 'Available');
+
+        if (error) throw error;
+
+        setLiveListings(data.map((item) => ({
           id: item.id,
           type: item.material_type,
-          seller: 'Industrial Node', // Mocked or joined from users table
+          seller: item.seller_name || 'Bhopal Central Hub',
           unit: item.material_type === 'CBG' ? 'Kg' : 'MT',
           price: item.price_per_unit,
           details: item.metric_verified,
-          metric: item.metric_verified,
+          metric: 'Verified Quality',
           stock: `${item.volume_tonnes} ${item.material_type === 'CBG' ? 'Kg' : 'MT'}`
         })));
+      } catch (err) {
+        console.error("Listing Fetch Error:", err);
       }
     };
+
+    const fetchLedger = async () => {
+      const { data } = await supabase
+        .from('rdf_transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(10);
+      if (data) setLedger(data);
+    };
+
     fetchListings();
+    fetchLedger();
   }, []);
 
   const baseAmount = selectedProduct ? selectedProduct.price * quantity : 0;
@@ -66,33 +82,41 @@ export default function MarketplacePage() {
     setLoading(true);
 
     try {
-      // 1. Log Transaction
-      const { error: txError } = await supabase.from('transactions').insert({
-        listing_id: selectedProduct.id,
-        base_amount: baseAmount,
-        commission_amount: commission,
-        total_amount: totalAmount,
-      });
+      // 1. Log Transaction in Supabase
+      const { data: newTx, error: txError } = await supabase
+        .from('rdf_transactions')
+        .insert({
+          buyer_name: "Industrial Node A-1", // Demo buyer
+          listing_id: selectedProduct.id,
+          total_amount: totalAmount,
+          commission: commission
+        })
+        .select()
+        .single();
 
       if (txError) throw txError;
 
-      // 2. Update Listing Status
+      // 2. Update Listing Status in Supabase
       const { error: updateError } = await supabase
         .from('marketplace_listings')
         .update({ status: 'Sold' })
         .eq('id', selectedProduct.id);
-
+      
       if (updateError) throw updateError;
 
       toast.success("Trade Executed", {
-        description: `Order successfully logged in the RDfly protocol. Transaction ID: TXN-${Math.random().toString(36).substring(7).toUpperCase()}`
+        description: `Order successfully logged in the RDfly protocol. Transaction ID: TXN-${newTx.id.substring(0, 8).toUpperCase()}`
       });
       
       setSelectedProduct(null);
       setLiveListings(prev => prev.filter(l => l.id !== selectedProduct.id));
+      
+      // Update ledger UI
+      setLedger(prev => [newTx, ...prev.slice(0, 9)]);
     } catch (error) {
+      console.error("Trade Error:", error);
       toast.error("Trade Failed", {
-        description: "Could not finalize settlement on Supabase."
+        description: "Could not finalize settlement on the live protocol."
       });
     } finally {
       setLoading(false);
@@ -100,7 +124,7 @@ export default function MarketplacePage() {
   };
 
   return (
-    <div className="container mx-auto px-6 py-12 space-y-8 animate-in fade-in duration-700">
+    <div className="container mx-auto px-6 py-12 space-y-12 animate-in fade-in duration-700">
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
         <div className="flex flex-col gap-2">
           <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Circular Fuel Marketplace</h1>
@@ -158,6 +182,56 @@ export default function MarketplacePage() {
            </Card>
          ))}
       </div>
+
+      {/* NEW: Live Settlement Ledger Section */}
+      <section className="space-y-6 pt-12 border-t border-white/5">
+         <div className="flex items-center justify-between">
+            <div className="space-y-1">
+               <h2 className="text-2xl font-black text-white uppercase tracking-tighter flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  Live Settlement Ledger
+               </h2>
+               <p className="text-xs text-neutral-500 font-bold uppercase tracking-widest">Real-time P2P Settlement Feed • Bhopal Node</p>
+            </div>
+            <Badge variant="outline" className="border-emerald-500/20 bg-emerald-500/5 text-emerald-400">
+               {ledger.length} TRADES LOGGED
+            </Badge>
+         </div>
+
+         <div className="rounded-2xl border border-white/5 bg-white/5 overflow-hidden">
+            <table className="w-full text-left text-[10px] uppercase font-bold tracking-widest">
+               <thead>
+                  <tr className="bg-white/5 text-neutral-500">
+                     <th className="px-6 py-4">Transaction ID</th>
+                     <th className="px-6 py-4">Counterparty</th>
+                     <th className="px-6 py-4">Resource ID</th>
+                     <th className="px-6 py-4">Amount</th>
+                     <th className="px-6 py-4">Status</th>
+                  </tr>
+               </thead>
+               <tbody className="divide-y divide-white/5">
+                  {ledger.length === 0 ? (
+                    <tr>
+                       <td colSpan={5} className="px-6 py-12 text-center text-neutral-700 italic">No trades executed in current session...</td>
+                    </tr>
+                  ) : (
+                    ledger.slice().reverse().map((tx) => (
+                      <tr key={tx.id} className="hover:bg-white/[0.02] transition-colors">
+                         <td className="px-6 py-4 font-mono text-emerald-500">{tx.id.substring(0, 12)}...</td>
+                         <td className="px-6 py-4 text-white">{tx.buyer_name}</td>
+                         <td className="px-6 py-4 text-neutral-400">{tx.listing_id}</td>
+                         <td className="px-6 py-4 text-white">₹{tx.total_amount.toLocaleString()}</td>
+                         <td className="px-6 py-4">
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/20 text-[8px]">SETTLED</Badge>
+                         </td>
+                      </tr>
+                    ))
+                  )}
+               </tbody>
+            </table>
+         </div>
+      </section>
+
 
       {/* Procurement Modal */}
       <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
